@@ -12,12 +12,11 @@
 
 ```bash
 $ docker run -d \
-  -v /etc/bird/:/etc/bird/ \
+  -v /etc/bird/bird.conf:/etc/bird/bird.conf:ro \
   --cap-add=NET_ADMIN \
-  --cap-add=NET_BROADCAST \
   --cap-add=NET_RAW \
   --network=host \
   --restart=always \
   --name=bird \
-  ghcr.io/akafeng/bird
+  ghcr.io/bzsparks/bird
 ```
