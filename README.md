@@ -3,24 +3,10 @@
 <p align="center">The BIRD project aims to develop a fully functional dynamic IP routing daemon.</p>
 
 <p align="center">
-    <a href="https://ghcr.io/akafeng/bird">Container Registry</a> ·
     <a href="https://bird.network.cz">Project Source</a>
 </p>
 
-<p align="center">
-    <img src="https://img.shields.io/github/actions/workflow/status/akafeng/docker-bird/push.yml?branch=main" />
-    <img src="https://img.shields.io/github/last-commit/akafeng/docker-bird" />
-    <img src="https://img.shields.io/github/v/release/akafeng/docker-bird" />
-    <img src="https://img.shields.io/github/release-date/akafeng/docker-bird" />
-</p>
-
 ---
-
-### Pull The Image
-
-```bash
-$ docker pull ghcr.io/akafeng/bird
-```
 
 ### Start Container
 
