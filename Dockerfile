@@ -63,4 +63,4 @@ RUN set -eux \
 
 EXPOSE 179/tcp
 
-CMD ["/bin/sh" "-c" "bird -c /etc/bird/bird.conf -d"]
+CMD ["/bin/sh", "-c", "bird -c /etc/bird/bird.conf -d"]
