@@ -66,4 +66,4 @@ EXPOSE 179/tcp
 #Debug
 #CMD ["/bin/sh", "-c", "bird -c /etc/bird/bird.conf -d"]
 #Foreground
-CMD ["/bin/sh", "-c", "bird -c /etc/bird/bird.conf -f"]
+CMD ["/bin/sh", "-c", "bird -c /etc/bird/bird.conf -f -u 179 -g 179"]
