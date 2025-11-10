@@ -2,7 +2,10 @@ FROM debian:bookworm-slim AS builder
 
 ARG BIRD_VERSION="3.1.2"
 ARG BIRD_URL="https://bird.network.cz/download/bird-${BIRD_VERSION}.tar.gz"
+
 ENV DEBIAN_FRONTEND=noninteractive
+ARG UID=179
+ARG GID=179
 
 RUN set -eux \
     && apt-get update -qyy \
@@ -51,6 +54,19 @@ LABEL com.bzsparks.image.title="bird" \
 COPY --from=builder /usr/sbin/bird* /usr/sbin/
 COPY --from=builder /etc/bird/ /etc/bird/
 
+# Create user and group
+RUN addgroup -S -g ${GID} bird && adduser -S -u ${UID} -H -h /tmp/bird -G bird bird
+
+# Create default configuration file
+RUN mkdir -p /etc/bird && chown root:bird /etc/bird/ && chmod 755 /etc/bird
+COPY bird.conf /etc/bird
+RUN chown root:bird /etc/bird/bird.conf && chmod 644 /etc/bird/bird.conf
+
+# Create working directory
+RUN mkdir -p /tmp/bird && chown bird:bird /tmp/bird && chmod 755 /tmp/bird
+
+VOLUME ["/etc/bird", "/tmp/bird"]
+
 RUN set -eux \
     && apt-get update -qyy \
     && apt-get install -qyy --no-install-recommends --no-install-suggests \
@@ -66,4 +82,9 @@ EXPOSE 179/tcp
 #Debug
 #CMD ["/bin/sh", "-c", "bird -c /etc/bird/bird.conf -d"]
 #Foreground
-CMD ["/bin/sh", "-c", "bird -c /etc/bird/bird.conf -f -u 179 -g 179"]
+#CMD ["/bin/sh", "-c", "bird -c /etc/bird/bird.conf -f -u 179 -g 179"]
+
+ENTRYPOINT ["/usr/sbin/bird", "-u", "bird"]
+CMD ["-f", "-c", "/etc/bird/bird.conf"]
+
+
