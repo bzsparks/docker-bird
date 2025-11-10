@@ -30,7 +30,7 @@ RUN set -eux \
     && ./configure \
         --prefix=/usr/ \
         --sysconfdir=/etc/bird/ \
-        --enable-debug \
+        #--enable-debug \
         --localstatedir=/var/ \
         --enable-libssh \
     && make -j"$(getconf _NPROCESSORS_ONLN)" \
@@ -76,4 +76,4 @@ RUN set -eux \
 EXPOSE 179/tcp
 
 ENTRYPOINT ["/usr/sbin/bird", "-u", "bird", "-g", "bird"]
-CMD ["-d", "-c", "/etc/bird/bird.conf"]
+CMD ["-f", "-c", "/etc/bird/bird.conf"]
