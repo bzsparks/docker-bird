@@ -15,8 +15,10 @@ $ docker run -d \
   -v /etc/bird/bird.conf:/etc/bird/bird.conf:ro \
   --cap-add=NET_ADMIN \
   --cap-add=NET_RAW \
+  --cap-add=NET_BIND_SERVICE \
+  --cap-add=NET_BROADCAST \ 
   --network=host \
   --restart=always \
   --name=bird \
-  ghcr.io/bzsparks/bird
+  bzsprks/bird:3.1.2
 ```
