@@ -1,1 +1,75 @@
+FROM alpine:3.19 AS builder
 
+ARG BIRD_VERSION="3.1.2"
+ARG BIRD_URL="https://bird.network.cz/download/bird-${BIRD_VERSION}.tar.gz"
+
+ARG UID=179
+ARG GID=179
+
+RUN set -eux \
+    && apk add --no-cache \
+        ca-certificates \
+        wget \
+        build-base \
+        flex \
+        bison \
+        ncurses-dev \
+        readline-dev \
+        libssh-dev \
+        linux-headers
+
+RUN wget -O bird.tar.gz ${BIRD_URL} \
+    && tar -xzvf bird.tar.gz -C /usr/src/ \
+    && rm -rf bird.tar.gz
+
+RUN set -eux \
+    && cd /usr/src/bird-${BIRD_VERSION}/ \
+    && ./configure \
+        --prefix=/usr/ \
+        --sysconfdir=/etc/bird/ \
+        --localstatedir=/var/ \
+        --enable-libssh \
+    && make -j $(nproc) \
+    && make install \
+    && { find /usr/sbin/bird* -type f -executable -exec strip --strip-all "{}" +; }
+
+######
+
+FROM alpine:3.19
+
+ARG BIRD_VERSION
+ARG DATE_CREATED
+ARG UID=179
+ARG GID=179
+
+LABEL com.bzsparks.image.title="bird" \
+    com.bzsparks.image.description="The BIRD Internet Routing Daemon" \
+    com.bzsparks.image.url="https://github.com/bzsparks/docker-bird" \
+    com.bzsparks.image.vendor="bzsparks.com" \
+    com.bzsparks.image.author="Ben Sparks" \
+    com.bzsparks.version="$BIRD_VERSION" \
+    com.bzsparks.image.created="$DATE_CREATED"
+
+COPY --from=builder /usr/sbin/bird* /usr/sbin/
+COPY --from=builder /etc/bird/ /etc/bird/
+
+# Create user and group
+RUN addgroup -g ${GID} -S bird && \
+    adduser -u ${UID} -D -S -G bird -s /sbin/nologin bird
+
+# Create default configuration directory
+RUN mkdir -p /etc/bird && chown root:bird /etc/bird/ && chmod 750 /etc/bird
+
+RUN set -eux \
+    && apk add --no-cache \
+        iproute2 \
+        ncurses-libs \
+        readline \
+        libssh \
+        iputils \
+        procps
+
+EXPOSE 179/tcp
+
+ENTRYPOINT ["/usr/sbin/bird", "-u", "bird", "-g", "bird"]
+CMD ["-f", "-c", "/etc/bird/bird.conf"]
