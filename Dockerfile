@@ -41,6 +41,8 @@ FROM debian:bookworm-slim
 
 ARG BIRD_VERSION
 ARG DATE_CREATED
+ARG UID=179
+ARG GID=179
 ENV DEBIAN_FRONTEND=noninteractive
 
 LABEL com.bzsparks.image.title="bird" \
@@ -55,17 +57,14 @@ COPY --from=builder /usr/sbin/bird* /usr/sbin/
 COPY --from=builder /etc/bird/ /etc/bird/
 
 # Create user and group
-RUN addgroup -S -g ${GID} bird && adduser -S -u ${UID} -H -h /tmp/bird -G bird bird
+RUN addgroup --system -gid ${GID} bird && \
+    adduser --system -uid ${UID} --no-create-home -gid bird --shell /bin/false bird
 
 # Create default configuration file
 RUN mkdir -p /etc/bird && chown root:bird /etc/bird/ && chmod 755 /etc/bird
-#COPY bird.conf /etc/bird
-RUN chown root:bird /etc/bird/bird.conf && chmod 644 /etc/bird/bird.conf
+RUN touch /etc/bird/bird.conf && chown root:bird /etc/bird/bird.conf && chmod 644 /etc/bird/bird.conf
 
-# Create working directory
-RUN mkdir -p /tmp/bird && chown bird:bird /tmp/bird && chmod 755 /tmp/bird
-
-VOLUME ["/etc/bird", "/tmp/bird"]
+VOLUME ["/etc/bird"]
 
 RUN set -eux \
     && apt-get update -qyy \
