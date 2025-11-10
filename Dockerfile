@@ -59,7 +59,7 @@ RUN addgroup -S -g ${GID} bird && adduser -S -u ${UID} -H -h /tmp/bird -G bird b
 
 # Create default configuration file
 RUN mkdir -p /etc/bird && chown root:bird /etc/bird/ && chmod 755 /etc/bird
-COPY bird.conf /etc/bird
+#COPY bird.conf /etc/bird
 RUN chown root:bird /etc/bird/bird.conf && chmod 644 /etc/bird/bird.conf
 
 # Create working directory
