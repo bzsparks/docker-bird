@@ -61,7 +61,7 @@ RUN addgroup --system -gid ${GID} bird && \
     adduser --system -uid ${UID} --no-create-home --ingroup bird --shell /usr/sbin/nologin bird
 
 # Create default configuration file
-RUN mkdir -p /etc/bird && chown root:bird /etc/bird/ && chmod 644 /etc/bird
+RUN mkdir -p /etc/bird && chown root:bird /etc/bird/ && chmod 750 /etc/bird
 #RUN touch /etc/bird/bird.conf && chown root:bird /etc/bird/bird.conf && chmod 644 /etc/bird/bird.conf
 
 RUN set -eux \
