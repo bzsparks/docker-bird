@@ -4,8 +4,8 @@ ARG BIRD_VERSION="3.1.2"
 ARG BIRD_URL="https://bird.network.cz/download/bird-${BIRD_VERSION}.tar.gz"
 
 ENV DEBIAN_FRONTEND=noninteractive
-#ARG UID=179
-#ARG GID=179
+ARG UID=179
+ARG GID=179
 
 RUN set -eux \
     && apt-get update -qyy \
@@ -41,8 +41,8 @@ FROM debian:bookworm-slim
 
 ARG BIRD_VERSION
 ARG DATE_CREATED
-#ARG UID=179
-#ARG GID=179
+ARG UID=179
+ARG GID=179
 ENV DEBIAN_FRONTEND=noninteractive
 
 LABEL com.bzsparks.image.title="bird" \
@@ -57,8 +57,8 @@ COPY --from=builder /usr/sbin/bird* /usr/sbin/
 COPY --from=builder /etc/bird/ /etc/bird/
 
 # Create user and group
-#RUN addgroup --system -gid ${GID} bird && \
-    #adduser --system -uid ${UID} --no-create-home --ingroup bird --shell /usr/sbin/nologin bird
+RUN addgroup --system -gid ${GID} bird && \
+    adduser --system -uid ${UID} --no-create-home --ingroup bird --shell /usr/sbin/nologin bird
 
 # Create default configuration file
 #RUN mkdir -p /etc/bird && chown root:bird /etc/bird/ && chmod 755 /etc/bird
@@ -84,8 +84,8 @@ EXPOSE 179/tcp
 #Foreground
 #CMD ["/bin/sh", "-c", "bird -c /etc/bird/bird.conf -f -u 179 -g 179"]
 
-#ENTRYPOINT ["/usr/sbin/bird", "-u", "bird"]
-ENTRYPOINT ["/usr/sbin/bird"]
+ENTRYPOINT ["/usr/sbin/bird", "-u", "bird", "-g", "bird"]
+#ENTRYPOINT ["/usr/sbin/bird"]
 CMD ["-f", "-c", "/etc/bird/bird.conf"]
 
 
