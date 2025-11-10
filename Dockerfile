@@ -73,18 +73,9 @@ RUN set -eux \
         libssh-4 \
         iputils-ping \
         procps \
-        strace \
     && rm -rf /var/lib/apt/lists/* /var/log/*
 
 EXPOSE 179/tcp
 
-#Debug
-#CMD ["/bin/sh", "-c", "bird -c /etc/bird/bird.conf -d"]
-#Foreground
-#CMD ["/bin/sh", "-c", "bird -c /etc/bird/bird.conf -f -u 179 -g 179"]
-
 ENTRYPOINT ["/usr/sbin/bird", "-u", "bird", "-g", "bird"]
-#ENTRYPOINT ["/usr/sbin/bird"]
 CMD ["-f", "-c", "/etc/bird/bird.conf"]
-
-
