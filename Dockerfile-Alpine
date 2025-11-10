@@ -22,6 +22,7 @@ RUN wget -O bird.tar.gz ${BIRD_URL} \
     && tar -xzvf bird.tar.gz -C /usr/src/ \
     && rm -rf bird.tar.gz
 
+# Build and install into a clean DESTDIR (/install)
 RUN set -eux \
     && cd /usr/src/bird-${BIRD_VERSION}/ \
     && ./configure \
@@ -30,8 +31,10 @@ RUN set -eux \
         --localstatedir=/var/ \
         --enable-libssh \
     && make -j"$(getconf _NPROCESSORS_ONLN)" \
-    && make install \
-    && { find /usr/sbin/bird* -type f -executable -exec strip --strip-all "{}" +; }
+    && make install DESTDIR=/install \
+    # strip any installed executables under /install to reduce final image size
+    && { find /install -type f -executable -exec strip --strip-all "{}" + || true; }
+
 
 ######
 
@@ -50,10 +53,8 @@ LABEL com.bzsparks.image.title="bird" \
     com.bzsparks.version="$BIRD_VERSION" \
     com.bzsparks.image.created="$DATE_CREATED"
 
-COPY --from=builder /usr/sbin/bird /usr/sbin/
-COPY --from=builder /usr/sbin/birdc /usr/sbin/
-COPY --from=builder /usr/sbin/birdcl /usr/sbin/
-COPY --from=builder /etc/bird/ /etc/bird/
+COPY --from=builder /install/usr/sbin/ /usr/sbin/
+COPY --from=builder /install/etc/bird/ /etc/bird/
 
 # Create user and group
 RUN addgroup -g ${GID} -S bird && \
