@@ -30,6 +30,7 @@ RUN set -eux \
     && ./configure \
         --prefix=/usr/ \
         --sysconfdir=/etc/bird/ \
+        --enable-debug \
         --localstatedir=/var/ \
         --enable-libssh \
     && make -j"$(getconf _NPROCESSORS_ONLN)" \
