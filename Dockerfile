@@ -58,7 +58,7 @@ COPY --from=builder /etc/bird/ /etc/bird/
 
 # Create user and group
 RUN addgroup --system -gid ${GID} bird && \
-    adduser --system -uid ${UID} --no-create-home --ingroup bird --shell /bin/false bird
+    adduser --system -uid ${UID} --no-create-home --ingroup bird --shell /usr/sbin/nologin bird
 
 # Create default configuration file
 RUN mkdir -p /etc/bird && chown root:bird /etc/bird/ && chmod 755 /etc/bird
@@ -74,6 +74,7 @@ RUN set -eux \
         libreadline8 \
         libssh-4 \
         iputils-ping \
+        procps \
     && rm -rf /var/lib/apt/lists/* /var/log/*
 
 EXPOSE 179/tcp
