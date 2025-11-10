@@ -29,7 +29,7 @@ RUN set -eux \
         --sysconfdir=/etc/bird/ \
         --localstatedir=/var/ \
         --enable-libssh \
-    && make -j $(nproc) \
+    && make -j $(getconf _NPROCESSORS_ONLN) \
     && make install \
     && { find /usr/sbin/bird* -type f -executable -exec strip --strip-all "{}" +; }
 
@@ -50,12 +50,14 @@ LABEL com.bzsparks.image.title="bird" \
     com.bzsparks.version="$BIRD_VERSION" \
     com.bzsparks.image.created="$DATE_CREATED"
 
-COPY --from=builder /usr/sbin/bird* /usr/sbin/
+COPY --from=builder /usr/sbin/bird /usr/sbin/
+COPY --from=builder /usr/sbin/birdc /usr/sbin/
+COPY --from=builder /usr/sbin/birdcl /usr/sbin/
 COPY --from=builder /etc/bird/ /etc/bird/
 
 # Create user and group
 RUN addgroup -g ${GID} -S bird && \
-    adduser -u ${UID} -D -S -G bird -s /sbin/nologin bird
+    adduser -u ${UID} -D -S -G bird -s /bin/false bird
 
 # Create default configuration directory
 RUN mkdir -p /etc/bird && chown root:bird /etc/bird/ && chmod 750 /etc/bird
