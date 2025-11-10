@@ -1,4 +1,4 @@
-FROM alpine:3.22.2 AS builder
+FROM alpine:3.17.9 AS builder
 
 ARG BIRD_VERSION="3.1.2"
 ARG BIRD_URL="https://bird.network.cz/download/bird-${BIRD_VERSION}.tar.gz"
@@ -40,7 +40,7 @@ RUN set -eux \
 
 ######
 
-FROM alpine:3.22.2
+FROM alpine:3.17.9
 
 ARG BIRD_VERSION
 ARG DATE_CREATED
