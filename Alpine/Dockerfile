@@ -75,5 +75,5 @@ RUN set -eux \
 
 EXPOSE 179/tcp
 
-ENTRYPOINT ["/usr/sbin/bird", "-u", "bird", "-g", "bird"]
-CMD ["-f", "-c", "/etc/bird/bird.conf"]
+ENTRYPOINT ["/usr/sbin/bird", "-f", "-u", "bird", "-g", "bird"]
+#CMD ["-f", "-c", "/etc/bird/bird.conf"]
