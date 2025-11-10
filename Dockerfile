@@ -73,6 +73,7 @@ RUN set -eux \
         libssh-4 \
         iputils-ping \
         procps \
+        strace \
     && rm -rf /var/lib/apt/lists/* /var/log/*
 
 EXPOSE 179/tcp
