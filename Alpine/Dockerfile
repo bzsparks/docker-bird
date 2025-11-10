@@ -18,9 +18,11 @@ RUN set -eux \
         libssh-dev \
         linux-headers
 
-RUN wget -O bird.tar.gz ${BIRD_URL} \
-    && tar -xzvf bird.tar.gz -C /usr/src/ \
-    && rm -rf bird.tar.gz
+RUN set -eux \
+    && mkdir -p /usr/src \
+    && wget -O /tmp/bird.tar.gz "${BIRD_URL}" \
+    && tar -xzf /tmp/bird.tar.gz -C /usr/src/ \
+    && rm -f /tmp/bird.tar.gz
 
 # Build and install into a clean DESTDIR (/install)
 RUN set -eux \
