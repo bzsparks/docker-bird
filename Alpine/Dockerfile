@@ -1,4 +1,4 @@
-FROM alpine:3.19 AS builder
+FROM alpine:3.22.2 AS builder
 
 ARG BIRD_VERSION="3.1.2"
 ARG BIRD_URL="https://bird.network.cz/download/bird-${BIRD_VERSION}.tar.gz"
@@ -35,23 +35,21 @@ RUN set -eux \
     # strip any installed executables under /install to reduce final image size
     && { find /install -type f -executable -exec strip --strip-all "{}" + || true; }
 
-
 ######
 
-FROM alpine:3.19
+FROM alpine:3.22.2
 
 ARG BIRD_VERSION
 ARG DATE_CREATED
 ARG UID=179
 ARG GID=179
 
-LABEL com.bzsparks.image.title="bird" \
-    com.bzsparks.image.description="The BIRD Internet Routing Daemon" \
-    com.bzsparks.image.url="https://github.com/bzsparks/docker-bird" \
-    com.bzsparks.image.vendor="bzsparks.com" \
-    com.bzsparks.image.author="Ben Sparks" \
-    com.bzsparks.version="$BIRD_VERSION" \
-    com.bzsparks.image.created="$DATE_CREATED"
+LABEL org.opencontainers.image.title="bird" \
+    org.opencontainers.image.description="The BIRD Internet Routing Daemon" \
+    org.opencontainers.image.vendor="https://bird.network.cz/" \
+    org.opencontainers.image.author="akafeng, bzsparks" \
+    org.opencontainers.image.version="$BIRD_VERSION" \
+    org.opencontainers.image.created="$DATE_CREATED"
 
 COPY --from=builder /install/usr/sbin/ /usr/sbin/
 COPY --from=builder /install/etc/bird/ /etc/bird/
