@@ -50,7 +50,7 @@ ARG GID=179
 LABEL org.opencontainers.image.title="bird" \
     org.opencontainers.image.description="The BIRD Internet Routing Daemon" \
     org.opencontainers.image.vendor="https://bird.network.cz/" \
-    org.opencontainers.image.author="akafeng, bzsparks" \
+    org.opencontainers.image.author="bzsparks" \
     org.opencontainers.image.version="$BIRD_VERSION" \
     org.opencontainers.image.created="$DATE_CREATED"
 

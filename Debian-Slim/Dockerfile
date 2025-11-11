@@ -20,20 +20,29 @@ RUN set -eux \
         libssh-dev \
     && rm -rf /var/lib/apt/lists/* /var/log/*
 
-RUN wget -O bird.tar.gz ${BIRD_URL} \
-    && tar -xzvf bird.tar.gz -C /usr/src/ \
-    && rm -rf bird.tar.gz
+#RUN wget -O bird.tar.gz ${BIRD_URL} \
+#    && tar -xzvf bird.tar.gz -C /usr/src/ \
+#    && rm -rf bird.tar.gz
+
+RUN set -eux \
+    && mkdir -p /usr/src \
+    && wget -O /tmp/bird.tar.gz "${BIRD_URL}" \
+    && tar -xzf /tmp/bird.tar.gz -C /usr/src/ \
+    && rm -f /tmp/bird.tar.gz
 
 RUN set -eux \
     && cd /usr/src/bird-${BIRD_VERSION}/ \
     && ./configure \
         --prefix=/usr/ \
         --sysconfdir=/etc/bird/ \
+        #--enable-debug \
         --localstatedir=/var/ \
         --enable-libssh \
-    && make -j $(nproc) \
-    && make install \
-    && { find /usr/sbin/bird* -type f -executable -exec strip --strip-all "{}" +; }
+    && make -j"$(getconf _NPROCESSORS_ONLN)" \
+    && make install DESTDIR=/install \
+    # strip any installed executables under /install to reduce final image size
+    && { find /install -type f -executable -exec strip --strip-all "{}" + || true; }
+    #&& { find /usr/sbin/bird* -type f -executable -exec strip --strip-all "{}" +; }
 
 ######
 
@@ -45,16 +54,17 @@ ARG UID=179
 ARG GID=179
 ENV DEBIAN_FRONTEND=noninteractive
 
-LABEL com.bzsparks.image.title="bird" \
-    com.bzsparks.image.description="The BIRD Internet Routing Daemon" \
-    com.bzsparks.image.url="https://github.com/bzsparks/docker-bird" \
-    com.bzsparks.image.vendor="bzsparks.com" \
-    com.bzsparks.image.author="Ben Sparks" \
-    com.bzsparks.version="$BIRD_VERSION" \
-    com.bzsparks.image.created="$DATE_CREATED"
+LABEL org.opencontainers.image.title="bird" \
+    org.opencontainers.image.description="The BIRD Internet Routing Daemon" \
+    org.opencontainers.image.vendor="https://bird.network.cz/" \
+    org.opencontainers.image.author="bzsparks" \
+    org.opencontainers.image.version="$BIRD_VERSION" \
+    org.opencontainers.image.created="$DATE_CREATED"
 
-COPY --from=builder /usr/sbin/bird* /usr/sbin/
-COPY --from=builder /etc/bird/ /etc/bird/
+#COPY --from=builder /usr/sbin/bird* /usr/sbin/
+#COPY --from=builder /etc/bird/ /etc/bird/
+COPY --from=builder /install/usr/sbin/ /usr/sbin/
+COPY --from=builder /install/etc/bird/ /etc/bird/
 
 # Create user and group
 RUN addgroup --system -gid ${GID} bird && \
