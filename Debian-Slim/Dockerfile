@@ -59,10 +59,6 @@ LABEL org.opencontainers.image.title="bird" \
 COPY --from=builder /install/usr/sbin/ /usr/sbin/
 COPY --from=builder /install/etc/bird/ /etc/bird/
 
-# Create user and group
-#RUN addgroup --system -gid ${GID} bird && \
-    #adduser --system -uid ${UID} --no-create-home --ingroup bird --shell /usr/sbin/nologin bird
-
 RUN groupadd --system --gid ${GID} bird && \
     useradd --system --uid ${UID} --no-create-home --gid bird --shell /usr/sbin/nologin bird
 
