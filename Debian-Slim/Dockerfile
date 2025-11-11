@@ -60,8 +60,11 @@ COPY --from=builder /install/usr/sbin/ /usr/sbin/
 COPY --from=builder /install/etc/bird/ /etc/bird/
 
 # Create user and group
-RUN addgroup --system -gid ${GID} bird && \
-    adduser --system -uid ${UID} --no-create-home --ingroup bird --shell /usr/sbin/nologin bird
+#RUN addgroup --system -gid ${GID} bird && \
+    #adduser --system -uid ${UID} --no-create-home --ingroup bird --shell /usr/sbin/nologin bird
+
+RUN groupadd --system -gid ${GID} bird && \
+    useradd --system -uid ${UID} --no-create-home --gid bird --shell /usr/sbin/nologin bird
 
 # Create default configuration directory
 RUN mkdir -p /etc/bird && chown root:bird /etc/bird/ && chmod 750 /etc/bird
