@@ -1,4 +1,4 @@
-FROM debian:bookworm-slim AS builder
+FROM debian:trixie-slim AS builder
 
 ARG BIRD_VERSION="3.1.2"
 ARG BIRD_URL="https://bird.network.cz/download/bird-${BIRD_VERSION}.tar.gz"
@@ -20,10 +20,6 @@ RUN set -eux \
         libssh-dev \
     && rm -rf /var/lib/apt/lists/* /var/log/*
 
-#RUN wget -O bird.tar.gz ${BIRD_URL} \
-#    && tar -xzvf bird.tar.gz -C /usr/src/ \
-#    && rm -rf bird.tar.gz
-
 RUN set -eux \
     && mkdir -p /usr/src \
     && wget -O /tmp/bird.tar.gz "${BIRD_URL}" \
@@ -42,11 +38,10 @@ RUN set -eux \
     && make install DESTDIR=/install \
     # strip any installed executables under /install to reduce final image size
     && { find /install -type f -executable -exec strip --strip-all "{}" + || true; }
-    #&& { find /usr/sbin/bird* -type f -executable -exec strip --strip-all "{}" +; }
 
 ######
 
-FROM debian:bookworm-slim
+FROM debian:trixie-slim
 
 ARG BIRD_VERSION
 ARG DATE_CREATED
@@ -61,8 +56,6 @@ LABEL org.opencontainers.image.title="bird" \
     org.opencontainers.image.version="$BIRD_VERSION" \
     org.opencontainers.image.created="$DATE_CREATED"
 
-#COPY --from=builder /usr/sbin/bird* /usr/sbin/
-#COPY --from=builder /etc/bird/ /etc/bird/
 COPY --from=builder /install/usr/sbin/ /usr/sbin/
 COPY --from=builder /install/etc/bird/ /etc/bird/
 
