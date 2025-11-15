@@ -77,6 +77,12 @@ RUN set -eux \
         procps \
     && rm -rf /var/lib/apt/lists/* /var/log/*
 
+HEALTHCHECK --interval=30s \
+            --timeout=10s \
+            --start-period=30s \
+            --retries=3 \
+    CMD /usr/sbin/birdc show protocols | grep -q "Established" || exit 1
+
 EXPOSE 179/tcp
 
 ENTRYPOINT ["/usr/sbin/bird", "-u", "bird", "-g", "bird"]
