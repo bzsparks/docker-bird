@@ -1,6 +1,6 @@
 FROM debian:trixie-slim AS builder
 
-ARG BIRD_VERSION="3.1.4"
+ARG BIRD_VERSION="3.1.5"
 #ARG BIRD_URL="https://bird.network.cz/download/bird-${BIRD_VERSION}.tar.gz"
 ARG BIRD_URL="https://bird.nic.cz/download/bird-${BIRD_VERSION}.tar.gz"
 
