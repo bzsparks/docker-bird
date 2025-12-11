@@ -1,6 +1,6 @@
 FROM alpine:3.17.9 AS builder
 
-ARG BIRD_VERSION="3.1.2"
+ARG BIRD_VERSION="3.1.5"
 ARG BIRD_URL="https://bird.network.cz/download/bird-${BIRD_VERSION}.tar.gz"
 
 ARG UID=179
