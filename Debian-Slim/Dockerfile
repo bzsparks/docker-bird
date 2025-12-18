@@ -1,4 +1,4 @@
-FROM debian:trixie-slim AS builder
+FROM dhi.io/debian-base:trixie AS builder
 
 ARG BIRD_VERSION="3.1.5"
 #ARG BIRD_URL="https://bird.network.cz/download/bird-${BIRD_VERSION}.tar.gz"
@@ -14,12 +14,15 @@ RUN set -eux \
         ca-certificates \
         wget \
         build-essential \
+        gawk \
         flex \
         bison \
         libncurses-dev \
         libreadline-dev \
         libssh-dev \
     && rm -rf /var/lib/apt/lists/* /var/log/*
+
+RUN update-ca-certificates
 
 RUN set -eux \
     && mkdir -p /usr/src \
@@ -42,7 +45,7 @@ RUN set -eux \
 
 ######
 
-FROM debian:trixie-slim
+FROM dhi.io/debian-base:trixie
 
 ARG BIRD_VERSION
 ARG DATE_CREATED
@@ -60,12 +63,6 @@ LABEL org.opencontainers.image.title="bird" \
 COPY --from=builder /install/usr/sbin/ /usr/sbin/
 COPY --from=builder /install/etc/bird/ /etc/bird/
 
-RUN groupadd --system --gid ${GID} bird && \
-    useradd --system --uid ${UID} --no-create-home --gid bird --shell /usr/sbin/nologin bird
-
-# Create default configuration directory
-RUN mkdir -p /etc/bird && chown root:bird /etc/bird/ && chmod 750 /etc/bird
-
 RUN set -eux \
     && apt-get update -qyy \
     && apt-get install -qyy --no-install-recommends --no-install-suggests \
@@ -75,7 +72,14 @@ RUN set -eux \
         libssh-4 \
         iputils-ping \
         procps \
+	passwd \
     && rm -rf /var/lib/apt/lists/* /var/log/*
+
+RUN groupadd --system --gid ${GID} bird && \
+    useradd --system --uid ${UID} --no-create-home --gid bird --shell /usr/sbin/nologin bird
+
+# Create default configuration directory
+RUN mkdir -p /etc/bird && chown root:bird /etc/bird/ && chmod 750 /etc/bird
 
 HEALTHCHECK --interval=30s \
             --timeout=10s \
