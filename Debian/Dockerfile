@@ -72,6 +72,7 @@ RUN set -eux \
         libssh-4 \
         iputils-ping \
         procps \
+		dnsutils \
 	passwd \
     && rm -rf /var/lib/apt/lists/* /var/log/*
 
