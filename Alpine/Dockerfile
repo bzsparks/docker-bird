@@ -1,7 +1,7 @@
 FROM alpine:latest AS builder
 
-ARG BIRD_VERSION="3.1.5"
-ARG BIRD_URL="https://bird.network.cz/download/bird-${BIRD_VERSION}.tar.gz"
+ARG BIRD_VERSION="3.2.1"
+ARG BIRD_URL="https://bird.nic.cz/download/bird-${BIRD_VERSION}.tar.gz"
 
 ARG UID=179
 ARG GID=179
@@ -49,7 +49,7 @@ ARG GID=179
 
 LABEL org.opencontainers.image.title="bird" \
     org.opencontainers.image.description="The BIRD Internet Routing Daemon" \
-    org.opencontainers.image.vendor="https://bird.network.cz/" \
+    org.opencontainers.image.vendor="https://bird.nic.cz/" \
     org.opencontainers.image.author="bzsparks" \
     org.opencontainers.image.version="$BIRD_VERSION" \
     org.opencontainers.image.created="$DATE_CREATED"

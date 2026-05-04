@@ -1,6 +1,6 @@
-FROM dhi.io/debian-base:trixie AS builder
+FROM debian:trixie-slim AS builder
 
-ARG BIRD_VERSION="3.1.5"
+ARG BIRD_VERSION="3.2.1"
 #ARG BIRD_URL="https://bird.network.cz/download/bird-${BIRD_VERSION}.tar.gz"
 ARG BIRD_URL="https://bird.nic.cz/download/bird-${BIRD_VERSION}.tar.gz"
 
@@ -21,8 +21,6 @@ RUN set -eux \
         libreadline-dev \
         libssh-dev \
     && rm -rf /var/lib/apt/lists/* /var/log/*
-
-RUN update-ca-certificates
 
 RUN set -eux \
     && mkdir -p /usr/src \
@@ -45,7 +43,7 @@ RUN set -eux \
 
 ######
 
-FROM dhi.io/debian-base:trixie
+FROM debian:trixie-slim
 
 ARG BIRD_VERSION
 ARG DATE_CREATED
