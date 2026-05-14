@@ -19,6 +19,67 @@ Each image contains BIRD 3.2.1 compiled from source with libssh (RPKI) support. 
 
 ---
 
+### Sidecar Deployment
+
+```text
+┌──────────────────────────────────────────────────────────────────────┐
+│                         Host Machine                                 │
+│                                                                      │
+│  ┌────────────────────────────────────────────────────────────────┐  │
+│  │              Shared Network Namespace                          │  │
+│  │                                                                 │  │
+│  │  ┌─────────────────────────────┐  ┌─────────────────────────┐  │  │
+│  │  │        Primary Service      │  │         BIRD Sidecar    │  │  │
+│  │  │                             │  │                         │  │  │
+│  │  │  ┌───────────────────────┐  │  │  ┌───────────────────┐ │  │  │
+│  │  │  │    eth0 (10.0.0.10)   │  │  │  │  /usr/sbin/bird   │ │  │  │
+│  │  │  │                       │◄─┼──┼──┼─┤  -u bird -g bird│ │  │  │
+│  │  │  │    lo:0 (10.0.0.11)   │  │  │  │                   │ │  │  │
+│  │  │  └───────────────────────┘  │  │  └───────────────────┘ │  │  │
+│  │  │                             │  │                         │  │  │
+│  │  │  named (BIND9 DNS)          │  │  /etc/bird/bird.conf   │  │  │
+│  │  │  :53/udp, :53/tcp           │  │  (mounted :ro)         │  │  │
+│  │  └─────────────────────────────┘  └─────────────────────────┘  │  │
+│  │                                                                 │  │
+│  │  ┌──────────────────────────────────────────────────────────┐  │  │
+│  │  │  Shared Kernel State:                                    │  │  │
+│  │  │  • Routing table   ── BIRD programs BGP routes here     │  │  │
+│  │  │  • Interfaces      ── both containers see the same set  │  │  │
+│  │  │  • ARP table       ── shared L2 resolution              │  │  │
+│  │  └──────────────────────────────────────────────────────────┘  │  │
+│  └────────────────────────────────────────────────────────────────┘  │
+│                                                                      │
+│  BGP Peering:  :179/tcp ──────────────────────────────────────► BGP │
+│  (on shared    (BIRD speaks BGP on behalf of the primary service)  │
+│   namespace)                                                       │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+With `network_mode: "service:primary"`, BIRD shares the network namespace of another container. It manipulates that container's routing table and speaks BGP on its interfaces — no `--network=host` needed.
+
+```yaml
+services:
+  bind9:
+    image: internetsystemsconsortium/bind9:9.20
+    # ... DNS server config ...
+
+  bird:
+    image: bzsprks/bird:3.2.1
+    network_mode: "service:bind9"
+    cap_add:
+      - NET_ADMIN
+      - NET_BIND_SERVICE
+      - NET_BROADCAST
+      - NET_RAW
+    volumes:
+      - './bird/bird.conf:/etc/bird/bird.conf:ro'
+    depends_on:
+      bind9:
+        condition: service_healthy
+```
+
+---
+
 ### Runtime Requirements
 
 BIRD manipulates the kernel routing table of whatever network namespace it runs in. It needs access to the interfaces and routes it's configured to manage. This can be:
