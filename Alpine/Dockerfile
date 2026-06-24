@@ -1,7 +1,11 @@
 FROM alpine:latest AS builder
 
-ARG BIRD_VERSION="3.2.1"
+ARG BIRD_VERSION="3.2.2"
 ARG BIRD_URL="https://bird.nic.cz/download/bird-${BIRD_VERSION}.tar.gz"
+# SHA256 of the upstream tarball, verified against bird.nic.cz over HTTPS on
+# 2026-06-24. Bump in lockstep with BIRD_VERSION; re-derive with:
+#   curl -fsSL "$BIRD_URL" | sha256sum
+ARG BIRD_SHA256="5b275f0f91c063bd0369a2996982f8f578736eb9b4b5c0fb62a275ec663f74df"
 
 ARG UID=179
 ARG GID=179
@@ -21,6 +25,7 @@ RUN set -eux \
 RUN set -eux \
     && mkdir -p /usr/src \
     && wget -O /tmp/bird.tar.gz "${BIRD_URL}" \
+    && echo "${BIRD_SHA256}  /tmp/bird.tar.gz" | sha256sum -c - \
     && tar -xzf /tmp/bird.tar.gz -C /usr/src/ \
     && rm -f /tmp/bird.tar.gz
 
