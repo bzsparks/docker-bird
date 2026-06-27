@@ -76,18 +76,14 @@ RUN set -eux \
         libssh-4 \
         iputils-ping \
         procps \
-		dnsutils \
 	passwd \
     && rm -rf /var/lib/apt/lists/* /var/log/*
 
-# NOTE: the absence of a `USER bird` directive is intentional and load-bearing.
-# The default ENTRYPOINT drops privileges itself (`bird -u bird -g bird`), so
-# the daemon runs unprivileged. Containers that REUSE this image with a custom
-# entrypoint — e.g. the anycast health sidecar that runs `ip addr` ops — rely
-# on the container starting as root so that cap_add NET_ADMIN is effective
-# (a non-root process gets added caps in its bounding set, not its effective
-# set, without ambient caps). Adding `USER bird` here would silently break
-# those reuses. Drop privileges in the entrypoint, never via USER.
+# NOTE: no `USER bird` directive is intentional. The ENTRYPOINT drops privileges
+# itself (`bird -u bird -g bird`): the daemon must START as root so it can retain
+# CAP_NET_ADMIN (and the other net caps) across the privilege drop via capset —
+# a `USER bird` directive would start it unprivileged and break that. Drop
+# privileges in the entrypoint, never via USER.
 RUN groupadd --system --gid ${GID} bird && \
     useradd --system --uid ${UID} --no-create-home --gid bird --shell /usr/sbin/nologin bird
 
