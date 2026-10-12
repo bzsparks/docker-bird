@@ -1,11 +1,17 @@
+# Global scope (before the first FROM) so every stage can import it with a bare
+# `ARG BIRD_VERSION`. A default declared inside a stage never reaches later
+# stages, which is why the image.version label was empty through 3.2.2.
+ARG BIRD_VERSION="3.3.3"
+
 FROM alpine:latest AS builder
 
-ARG BIRD_VERSION="3.2.2"
+ARG BIRD_VERSION
 ARG BIRD_URL="https://bird.nic.cz/download/bird-${BIRD_VERSION}.tar.gz"
 # SHA256 of the upstream tarball, verified against bird.nic.cz over HTTPS on
-# 2026-06-24. Bump in lockstep with BIRD_VERSION; re-derive with:
+# 2026-10-12 from two vantage points (Mac + docker-dev, matching). Bump in
+# lockstep with BIRD_VERSION; re-derive with:
 #   curl -fsSL "$BIRD_URL" | sha256sum
-ARG BIRD_SHA256="5b275f0f91c063bd0369a2996982f8f578736eb9b4b5c0fb62a275ec663f74df"
+ARG BIRD_SHA256="7e8b28a17dd619eb73eba959ef6a944dd9c11cf5c1700a2ecbb8eb13bd4a8a57"
 
 ARG UID=179
 ARG GID=179

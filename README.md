@@ -12,10 +12,10 @@
 
 | Image | Tags | Base |
 |-------|------|------|
-| `bzsprks/bird` | `latest`, `3.2.2` | `debian:trixie-slim` |
-| `bzsprks/bird` | `3.2.2-alpine` | `alpine:latest` |
+| `bzsprks/bird` | `latest`, `3.3.3` | `debian:trixie-slim` |
+| `bzsprks/bird` | `3.3.3-alpine` | `alpine:latest` |
 
-Each image contains BIRD 3.2.2 compiled from source with libssh (RPKI) support. The process runs as the unprivileged `bird` user (UID 179, GID 179).
+Each image contains BIRD 3.3.3 compiled from source with libssh (RPKI) support. The process runs as the unprivileged `bird` user (UID 179, GID 179).
 
 ---
 
@@ -64,7 +64,7 @@ services:
     # ... DNS server config ...
 
   bird:
-    image: bzsprks/bird:3.2.2
+    image: bzsprks/bird:3.3.3
     network_mode: "service:bind9"
     cap_add:
       - NET_ADMIN
@@ -117,7 +117,7 @@ docker run -d \
   --network=host \
   --restart=always \
   --name=bird \
-  bzsprks/bird:3.2.2
+  bzsprks/bird:3.3.3
 ```
 
 **Alpine:**
@@ -132,7 +132,7 @@ docker run -d \
   --network=host \
   --restart=always \
   --name=bird-alpine \
-  bzsprks/bird:3.2.2-alpine
+  bzsprks/bird:3.3.3-alpine
 ```
 
 ### Image Differences
