@@ -2,8 +2,13 @@
 # `ARG BIRD_VERSION`. A default declared inside a stage never reaches later
 # stages, which is why the image.version label was empty through 3.2.2.
 ARG BIRD_VERSION="3.3.3"
+# Base pinned by tag and index digest so a rebuild is the same build; a floating
+# tag would undercut the tarball SHA256 pin below. Bump deliberately; re-derive
+# the digest with:
+#   docker buildx imagetools inspect alpine:<ver> --format '{{json .Manifest}}' | jq -r .digest
+ARG BASE_IMAGE="alpine:3.24.2@sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6"
 
-FROM alpine:latest AS builder
+FROM ${BASE_IMAGE} AS builder
 
 ARG BIRD_VERSION
 ARG BIRD_URL="https://bird.nic.cz/download/bird-${BIRD_VERSION}.tar.gz"
@@ -35,6 +40,17 @@ RUN set -eux \
     && tar -xzf /tmp/bird.tar.gz -C /usr/src/ \
     && rm -f /tmp/bird.tar.gz
 
+# Local fixes on top of the verified tarball; each patch's header says why and
+# when it can go. A patch that no longer applies fails the build, which forces a
+# re-check on every BIRD_VERSION bump. rte-announce-overread.patch is what
+# keeps this image from dying with SIGILL on its first route (Alpine enables
+# _FORTIFY_SOURCE=2 by default).
+COPY patches/ /usr/src/patches/
+RUN set -eux \
+    && for p in /usr/src/patches/*.patch; do \
+        patch -p1 --forward --batch -d /usr/src/bird-${BIRD_VERSION}/ < "$p"; \
+    done
+
 # Build and install into a clean DESTDIR (/install)
 RUN set -eux \
     && cd /usr/src/bird-${BIRD_VERSION}/ \
@@ -51,7 +67,7 @@ RUN set -eux \
 
 ######
 
-FROM alpine:latest
+FROM ${BASE_IMAGE}
 
 ARG BIRD_VERSION
 ARG DATE_CREATED

@@ -2,8 +2,13 @@
 # `ARG BIRD_VERSION`. A default declared inside a stage never reaches later
 # stages, which is why the image.version label was empty through 3.2.2.
 ARG BIRD_VERSION="3.3.3"
+# Base pinned by dated tag and index digest so a rebuild is the same build; a
+# floating tag would undercut the tarball SHA256 pin below. Bump deliberately;
+# re-derive the digest with:
+#   docker buildx imagetools inspect debian:<tag> --format '{{json .Manifest}}' | jq -r .digest
+ARG BASE_IMAGE="debian:trixie-20261005-slim@sha256:a29215f6a35e51e22adffa17f89e9d2ef06214e64a2bad10d765c46aea49f11f"
 
-FROM debian:trixie-slim AS builder
+FROM ${BASE_IMAGE} AS builder
 
 ARG BIRD_VERSION
 #ARG BIRD_URL="https://bird.network.cz/download/bird-${BIRD_VERSION}.tar.gz"
@@ -40,6 +45,17 @@ RUN set -eux \
     && tar -xzf /tmp/bird.tar.gz -C /usr/src/ \
     && rm -f /tmp/bird.tar.gz
 
+# Local fixes on top of the verified tarball; each patch's header says why and
+# when it can go. A patch that no longer applies fails the build, which forces a
+# re-check on every BIRD_VERSION bump. rte-announce-overread.patch fixes a
+# stack over-read on every route announcement. It goes unnoticed here because
+# Debian doesn't enable _FORTIFY_SOURCE by default, but it is fixed here too.
+COPY patches/ /usr/src/patches/
+RUN set -eux \
+    && for p in /usr/src/patches/*.patch; do \
+        patch -p1 --forward --batch -d /usr/src/bird-${BIRD_VERSION}/ < "$p"; \
+    done
+
 RUN set -eux \
     && cd /usr/src/bird-${BIRD_VERSION}/ \
     && ./configure \
@@ -55,7 +71,7 @@ RUN set -eux \
 
 ######
 
-FROM debian:trixie-slim
+FROM ${BASE_IMAGE}
 
 ARG BIRD_VERSION
 ARG DATE_CREATED

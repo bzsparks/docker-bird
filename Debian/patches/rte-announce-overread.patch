@@ -1,0 +1,45 @@
+rte_announce_to: size the export source to the journal slot
+
+rt_exporter_push() copies journal.item_size - OFFSETOF(struct rt_export_item,
+data) bytes out of the item it is handed. lfjour_init() has already rounded
+item_size up with BIRD_CPU_ALIGN() (40 -> 48 on x86_64), so every route
+announcement read 8 bytes past the struct rt_pending_export on the caller's
+stack. With _FORTIFY_SOURCE and LTO inlining, GCC sees the stack object's real
+size and traps: SIGILL on Alpine (fortify-headers, GCC 15). Without fortify, the
+8 bytes are copied silently.
+
+Upstream BIRD 3.3.3 and thread-next carry the same code as of 2026-10-14.
+Re-check on every BIRD_VERSION bump, and drop this patch once upstream fixes it.
+
+--- a/nest/rt-table.c
++++ b/nest/rt-table.c
+@@ -2044,14 +2044,22 @@
+   if (new == old)
+     return NULL;
+
+-  struct rt_pending_export rpe = {
+-    .it = {
+-      .new = new,
+-      .old = old,
+-    },
+-  };
++  /*
++   * rt_exporter_push() copies journal.item_size - OFFSETOF(data) bytes out of
++   * the item it is given, and lfjour_init() has already rounded item_size up
++   * with BIRD_CPU_ALIGN(). A bare struct rt_pending_export on the stack is
++   * smaller than that slot, so the copy read past it. Give the copy a source
++   * as large as the slot, zeroed so the padding carries no stack contents.
++   */
++  union {
++    struct rt_pending_export rpe;
++    byte slot[BIRD_CPU_ALIGN(sizeof(struct rt_pending_export))];
++  } src;
++  memset(&src, 0, sizeof src);
++  src.rpe.it.new = new;
++  src.rpe.it.old = old;
+
+-  struct rt_export_item *rei = rt_exporter_push(e, &rpe.it);
++  struct rt_export_item *rei = rt_exporter_push(e, &src.rpe.it);
+   if (!rei)
+     return NULL;
+
