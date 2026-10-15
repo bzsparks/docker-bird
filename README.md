@@ -62,9 +62,19 @@ protocol bgp upstream {
 }
 ```
 
+BIRD gets its own address on the peering segment through macvlan, so its
+capabilities apply to its own network namespace, not the host's (see
+[Networking](#networking)). `parent` is the host interface on the segment
+where the peer lives:
+
+```bash
+docker network create -d macvlan -o parent=eth0 \
+  --subnet 192.0.2.0/24 --gateway 192.0.2.1 bgp-lan
+```
+
 ```bash
 docker run -d --name bird \
-  --network host \
+  --network bgp-lan --ip 192.0.2.10 \
   --cap-add NET_ADMIN --cap-add NET_BIND_SERVICE \
   --cap-add NET_BROADCAST --cap-add NET_RAW \
   -v "$PWD/bird.conf:/etc/bird/bird.conf:ro" \
@@ -82,11 +92,23 @@ The same container in Compose:
 services:
   bird:
     image: bzsprks/bird:3.3.3
-    network_mode: host
     restart: unless-stopped
     cap_add: [NET_ADMIN, NET_BIND_SERVICE, NET_BROADCAST, NET_RAW]
     volumes:
       - ./bird.conf:/etc/bird/bird.conf:ro
+    networks:
+      bgp-lan:
+        ipv4_address: 192.0.2.10
+
+networks:
+  bgp-lan:
+    driver: macvlan
+    driver_opts:
+      parent: eth0
+    ipam:
+      config:
+        - subnet: 192.0.2.0/24
+          gateway: 192.0.2.1
 ```
 
 ## Capabilities
@@ -109,13 +131,13 @@ default set.
 
 Once it has started, the daemon holds only these four, whatever the container
 grants. Removing everything else, as in the profile below, mostly narrows the
-moment before the privilege drop and what `docker exec` sessions can do:
+moment before the privilege drop and what `docker exec` sessions can do. The
+`bgp-lan` network is the one from the Quick start:
 
 ```yaml
 services:
   bird:
     image: bzsprks/bird:3.3.3
-    network_mode: host
     restart: unless-stopped
     cap_drop: [ALL]
     cap_add:
@@ -133,6 +155,9 @@ services:
     tmpfs: [/run]       # the control socket lives here
     volumes:
       - ./bird:/etc/bird:ro
+    networks:
+      bgp-lan:
+        ipv4_address: 192.0.2.10
 ```
 
 You can drop `DAC_OVERRIDE` if you always run `docker exec -u bird bird birdc ...`
@@ -141,14 +166,25 @@ socket.
 
 ## Networking
 
-BIRD routes for whichever network namespace it runs in. Choose that namespace
-deliberately:
+BIRD routes for whichever network namespace it runs in, and its four
+capabilities apply to that namespace. Give it a namespace of its own unless it
+really has to drive the host's routing table.
 
-| Mode | BIRD manages | Typical use |
-|------|--------------|-------------|
-| `--network host` | The host's routing table and interfaces | The host's routing daemon, such as an edge router, a hypervisor announcing workloads, or an OSPF or BGP fabric member |
-| `--network container:<name>` (Compose: `network_mode: "service:<name>"`) | Another container's namespace | Announcing that service's address from inside its namespace, for example an anycast or VIP service |
-| Bridge, with `-p 179:179` | Only the container's own namespace | Route servers, reflectors and collectors that never program a kernel table |
+| Mode | BIRD manages | Use it for | Catch |
+|------|--------------|------------|-------|
+| **macvlan or ipvlan** (the examples above) | Its own namespace, with its own address on the segment | Direct eBGP to a router, announcing addresses, route servers and reflectors | The host cannot reach its own macvlan containers, so peer and monitor from elsewhere. Routes BIRD learns stay in the container's table. Use ipvlan L2 where the switch port or hypervisor allows only one MAC address |
+| **Another container's namespace**: `--network container:<name>` (Compose: `network_mode: "service:<name>"`) | That container's namespace | Announcing that service's address from beside it, for example anycast | Restarting the owning container strands BIRD (see below) |
+| **Bridge**, with `-p 179:179` | Its own namespace, behind Docker's NAT | iBGP and multihop sessions: route reflectors, route servers, collectors | Plain eBGP generally fails. The peer isn't directly connected, so BIRD waits in `Idle` unless you set `multihop`. Docker's forwarding hop drops the TTL-1 packets of a single-hop session. And the next hop BIRD advertises is the container's private address |
+| **Host**: `--network host` | **The host's** routing table, interfaces and firewall | Only when the host itself must forward by BIRD's routes: an edge router, or a hypervisor routing for its workloads | See the warning below |
+
+> [!WARNING]
+> **Host mode hands BIRD the host's network stack.** BIRD keeps `NET_ADMIN`
+> and `NET_RAW` after it drops root, and in host mode they apply to the host
+> itself. A compromise of BIRD's network-facing code, such as its BGP UPDATE
+> parsing, could then rewrite the host's routes and firewall, take interfaces
+> down, sniff every interface, and reach services bound to the host's
+> `127.0.0.1`. In BIRD's own namespace, the same capabilities reach only that
+> namespace.
 
 Running BIRD alongside another container:
 
