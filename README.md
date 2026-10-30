@@ -30,7 +30,7 @@ service.
 | Tag | Base | Notes |
 |-----|------|-------|
 | `latest`, `3.3.3` | `debian:trixie-20261005-slim` | Default. glibc, built-in health check |
-| `3.3.3-alpine` | `alpine:3.24.2` | musl, about 16 MB versus 94 MB for Debian, no health check |
+| `3.3.3-alpine` | `alpine:3.24.3` | musl, about 16 MB versus 94 MB for Debian, no health check |
 
 Version tags match the upstream BIRD release. Pin a version in production,
 because `latest` moves.
@@ -281,7 +281,7 @@ To disable it, use `--no-healthcheck` or `healthcheck: { disable: true }`.
 
 | | Debian | Alpine |
 |--|--------|--------|
-| Base | `debian:trixie-20261005-slim` | `alpine:3.24.2` |
+| Base | `debian:trixie-20261005-slim` | `alpine:3.24.3` |
 | libc | glibc | musl |
 | Size | about 94 MB | about 16 MB |
 | Health check | Yes | No |
@@ -323,7 +323,7 @@ curl -fsSL "https://bird.nic.cz/download/bird-${BIRD_VERSION}.tar.gz" | sha256su
 To move a base image, set `BASE_IMAGE` to the new tag and its index digest:
 
 ```bash
-docker buildx imagetools inspect alpine:3.24.2 --format '{{json .Manifest}}' | jq -r .digest
+docker buildx imagetools inspect alpine:3.24.3 --format '{{json .Manifest}}' | jq -r .digest
 ```
 
 ## Patches
